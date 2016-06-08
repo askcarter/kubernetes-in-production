@@ -1,11 +1,47 @@
+/*
+dbd is a simple database server.  It registers an endpoint that
+can be used to retrieve data to/from it's database.
+
+For example
+    $ go build && ./dbd --http :55555 &
+    $ curl "http://127.0.0.1:55555/list?type=cards&user=user1@test.com&q=*"
+    [
+        {
+            "id": 8,
+            "owner": "user2@test.com:algebra",
+            "front": "x+x",
+            "back": "2x"
+        },
+        {
+            "id": 9,
+            "owner": "user2@test.com:programming",
+            "front": "favorite programming language",
+            "back": "Go"
+        },
+        {
+            "id": 10,
+            "owner": "user2@test.com:programming",
+            "front": "public interface",
+            "back": "API"
+        }
+    ]
+
+The database operates on Card, Deck, and User types.  Users own Decks which are
+made up of Cards.
+
+*/
 package main
 
 import (
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/askcarter/spacerep/lib/db"
@@ -13,7 +49,49 @@ import (
 )
 
 func main() {
+	var (
+		httpAddr = flag.String("http", ":80", "HTTP service address.")
+		// healthAddr = flag.String("health", ":81", "Health service address.")
+		file = flag.String("f", "test", "DB file")
+	)
+	flag.Parse()
 
+	adb := &appDB{&db.DB{}}
+	if err := adb.ds.Open(*file); err != nil {
+		panic(err)
+	}
+	defer adb.ds.Close()
+
+	// Use a buffered error channel so that handlers can
+	// keep processing after throwing errors.
+	errChan := make(chan error, 10)
+	go func() {
+		httpServer := new(http.Server)
+		httpServer.Addr = *httpAddr
+
+		r := router(adb)
+		httpServer.Handler = loggingHandler(r)
+
+		log.Println("Starting server...")
+		log.Printf("HTTP service listening on %s", *httpAddr)
+
+		errChan <- httpServer.ListenAndServe()
+	}()
+
+	signalChan := make(chan os.Signal)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+
+	for {
+		select {
+		case err := <-errChan:
+			// Log any errors from our server
+			log.Fatal(err)
+		case s := <-signalChan:
+			// ctrl+c is a clean exit
+			log.Println(fmt.Sprintf("Captured %v. Exiting...", s))
+			os.Exit(0)
+		}
+	}
 }
 
 func router(adb *appDB) *mux.Router {
@@ -119,6 +197,8 @@ func (a *appDB) store(w http.ResponseWriter, r *http.Request) (int, error) {
 	return http.StatusOK, nil
 }
 
+// appHandler server all of this applications web traffic, handling
+// error reporting and any setup that might be needed for our requests.
 type appHandler func(http.ResponseWriter, *http.Request) (int, error)
 
 func (fn appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
