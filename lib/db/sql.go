@@ -2,10 +2,8 @@ package db
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -16,49 +14,89 @@ type DB struct {
 	*sql.DB
 }
 
-// Init searches for [decks|users|cards].json to populate table with.
-func (db *DB) Init(dir string) error {
+func (db *DB) createTables() error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
 
 	// Create decks table.
-	query := `
-    CREATE TABLE IF NOT EXISTS decks(
-        Name TEXT PRIMARY KEY,
-        InsertedDatetime DATETIME
-    );`
-	if _, err := tx.Exec(query); err != nil {
-		return err
+	queries := []string{
+		`CREATE TABLE IF NOT EXISTS decks(
+            Name TEXT PRIMARY KEY,
+            InsertedDatetime DATETIME
+        );`,
+		`CREATE TABLE IF NOT EXISTS users(
+            Email TEXT PRIMARY KEY,
+            Name TEXT,
+            Password TEXT,
+            InsertedDatetime DATETIME
+        );`,
 	}
+	for _, query := range queries {
+		if _, err := tx.Exec(query); err != nil {
+			return err
+		}
+	}
+
 	if err := tx.Commit(); err != nil {
 		return err
 	}
+	return nil
+}
 
-	// Read data from the table.
-	b, err := ioutil.ReadFile(dir + "/decks.json")
+// func readFromDisk(f string) (listStorer, error) {
+// 	b, err := ioutil.ReadFile(f)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	var ls listStorer
+// 	switch {
+// 	case strings.HasSuffix(f, "decks.json"):
+// 		decks := deckList{}
+// 		if err := json.Unmarshal(b, &decks); err != nil {
+// 			return nil, err
+// 		}
+// 		ls = decks
+// 	case strings.HasSuffix(f, "users.json"):
+// 		users := userList{}
+// 		if err := json.Unmarshal(b, &users); err != nil {
+// 			return nil, err
+// 		}
+// 		ls = users
+// 	default:
+// 		return nil, errors.New("readFromDisk: bad type passed in: " + f)
+// 	}
+// 	return ls, nil
+// }
+
+// Init searches for [decks|users|cards].json to populate table with.
+func (db *DB) Init(dir string) error {
+	err := db.createTables()
 	if err != nil {
 		return err
 	}
-	decks := make(deckList, 20)
-	if err := json.Unmarshal(b, &decks); err != nil {
-		return err
-	}
 
-	// Store the info in the table
-	tx2, err := db.Begin()
-	if err != nil {
-		return err
-	}
+	// // populate tables
+	// tx, err := db.Begin()
+	// if err != nil {
+	// 	return err
+	// }
+	// files := []string{"decks.json", "users.json"}
+	// for _, f := range files {
+	// 	f = filepath.Join(dir, f)
+	// 	ul, err := readFromDisk(f)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	if err := db.Store(ul); err != nil {
+	// 		return err
+	// 	}
+	// }
 
-	if err := db.Store(decks); err != nil {
-		return err
-	}
-
-	if err := tx2.Commit(); err != nil {
-		return err
-	}
+	// if err := tx.Commit(); err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
@@ -99,6 +137,17 @@ func (db *DB) Store(ls listStorer) error {
 				return err
 			}
 		}
+	case userList:
+		cmd := `
+        INSERT OR REPLACE INTO users(
+            Email, Name, Password, InsertedDatetime
+        ) values(?, ?, ?, CURRENT_TIMESTAMP)`
+		for _, u := range ls {
+			e := strings.ToLower(u.Email)
+			if _, err := tx.Exec(cmd, e, u.Name, u.Password); err != nil {
+				return err
+			}
+		}
 	default:
 		return fmt.Errorf("db.Store: bad typed (%T) passed in.", ls)
 	}
@@ -110,7 +159,6 @@ func (db *DB) Store(ls listStorer) error {
 }
 
 func (db *DB) List(l listOp) (listStorer, error) {
-	dl := deckList{{Name: "test:deck1"}}
 	if strings.HasSuffix(l.query, "*") {
 		l.query = strings.TrimRight(l.query, "*")
 		l.query += "%"
@@ -120,7 +168,7 @@ func (db *DB) List(l listOp) (listStorer, error) {
 	switch l.what {
 	case "decks":
 		cmd := "SELECT Name FROM decks\n"
-		cmd += "WHERE Name LIKE\"" + l.query + "\"\n"
+		cmd += "WHERE Name LIKE \"" + l.query + "\"\n"
 		cmd += "ORDER BY Name ASC\n"
 
 		rows, err := db.Query(cmd)
@@ -137,11 +185,33 @@ func (db *DB) List(l listOp) (listStorer, error) {
 				return nil, err
 			}
 			result = append(result, deck)
-			// fmt.Println("\n\n\n deck: ", deck.Name, "\n\n\n")
 
 		}
 		return result, nil
+	case "users":
+		cmd := "SELECT Email, Name, Password FROM users\n"
+		cmd += "WHERE Email LIKE \"" + l.query + "\"\n"
+		cmd += "ORDER BY Email ASC\n"
+
+		fmt.Println(cmd)
+		rows, err := db.Query(cmd)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		var result userList
+		for rows.Next() {
+			user := User{}
+			err := rows.Scan(&user.Email, &user.Name, &user.Password)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, user)
+		}
+
+		return result, nil
 	}
 
-	return dl, nil
+	return nil, errors.New("db.List(): unknown type passed in: " + l.what)
 }
