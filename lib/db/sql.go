@@ -182,14 +182,13 @@ func (db *DB) List(l listOp) (listStorer, error) {
 		l.query += "%"
 	}
 
-	// fmt.Println("\n\n\nquery: ", l.query, "\n\n\n")
 	switch l.what {
 	case "users":
-		cmd := "SELECT Email, Name, Password FROM users\n"
-		cmd += "WHERE Email LIKE \"" + l.query + "\"\n"
-		cmd += "ORDER BY Email ASC\n"
+		cmd := `SELECT Email, Name, Password FROM users
+                WHERE Email LIKE ?
+                ORDER BY Email ASC`
 
-		rows, err := db.Query(cmd)
+		rows, err := db.Query(cmd, l.query)
 		if err != nil {
 			return nil, err
 		}
@@ -206,11 +205,11 @@ func (db *DB) List(l listOp) (listStorer, error) {
 		}
 		return result, nil
 	case "decks":
-		cmd := "SELECT Name, Desc FROM decks\n"
-		cmd += "WHERE Name LIKE \"" + l.query + "\"\n"
-		cmd += "ORDER BY Name ASC\n"
+		cmd := `SELECT Name, Desc FROM decks
+		        WHERE Name LIKE ?
+		        ORDER BY Name ASC`
 
-		rows, err := db.Query(cmd)
+		rows, err := db.Query(cmd, l.query)
 		if err != nil {
 			return nil, err
 		}
@@ -227,11 +226,11 @@ func (db *DB) List(l listOp) (listStorer, error) {
 		}
 		return result, nil
 	case "cards":
-		cmd := "SELECT ID, Owner, Front, Back FROM cards\n"
-		cmd += "WHERE Owner LIKE\"" + l.query + "\"\n"
-		cmd += "ORDER BY Owner ASC\n"
+		cmd := `SELECT ID, Owner, Front, Back FROM cards
+		        WHERE Owner LIKE ?
+		        ORDER BY Owner ASC`
 
-		rows, err := db.Query(cmd)
+		rows, err := db.Query(cmd, l.query)
 		if err != nil {
 			return nil, err
 		}
