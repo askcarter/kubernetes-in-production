@@ -150,9 +150,6 @@ func TestSqlDS(t *testing.T) {
 		err = db.Open(f.Name())
 		c.Expect(test.EQ, nil, err)
 
-		err = db.Init("")
-		c.Expect(test.EQ, nil, err)
-
 		t.Run(tt.desc, func(t *testing.T) {
 			tt.fn(t, db)
 		})

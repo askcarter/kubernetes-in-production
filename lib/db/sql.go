@@ -116,17 +116,35 @@ func readFromDisk(f string) (listStorer, error) {
 
 // Init searches for [decks|users|cards].json to populate table with.
 func (db *DB) Init(dir string) error {
-	err := db.createTables()
+	// populate tables
+	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
+	files := []string{"decks.json", "users.json", "cards.json"}
+	for _, f := range files {
+		f = filepath.Join(dir, f)
+		ul, err := readFromDisk(f)
+		if err != nil {
+			return err
+		}
+		if err := db.Store(ul); err != nil {
+			return err
+		}
+	}
 
+	if err := tx.Commit(); err != nil {
+		return err
+	}
 	return nil
 }
 
 // Open attempts to open an database and will check to make sure it
-// can connect to it.  Open doesn't create any tables or populate any
-// data into DB (other than what might already exist in filename).
+// can connect to it.  After a DB is Open'd it is ready to Store/List data
+// from.
+//
+// Open doesn't populate any data into DB (other than what might already exist
+// in filename).
 func (db *DB) Open(filename string) error {
 	d, err := sql.Open("sqlite3", filename)
 	if err != nil {
@@ -140,6 +158,12 @@ func (db *DB) Open(filename string) error {
 	}
 
 	db.DB = d
+
+	err = db.createTables()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
