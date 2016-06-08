@@ -10,20 +10,20 @@ import (
 
 var tests = []struct {
 	desc string
-	fn   func(t *testing.T, db datasource)
+	fn   func(t *testing.T, db DataSource)
 }{
 	{"User List/Store",
-		func(t *testing.T, db datasource) {
+		func(t *testing.T, db DataSource) {
 			c := test.Checker(t)
 
-			want := userList{
+			want := UserList{
 				{Email: "user1@test.com", Name: "Bill", Password: "$2a$10$KgFhp4HAaBCRAYbFp5XYUOKrbO90yrpUQte4eyafk4Tu6mnZcNWiK"},
 				{Email: "user2@test.com", Name: "Jill", Password: "$2a$10$KgFhp4HAaBCRAYbFp5XYUOKrbO90yrpUQte4eyafk4Tu6mnZcNWiK"},
 			}
 			err := db.Store(want)
 			c.Expect(test.EQ, nil, err)
 
-			got, err := db.List(listOp{what: "users", query: "user1@test.com"})
+			got, err := db.List(ListOp{What: "users", Query: "user1@test.com"})
 			c.Expect(test.EQ, nil, err)
 			c.Expect(test.EQ, want[:1], got)
 
@@ -31,23 +31,23 @@ var tests = []struct {
 			err = db.Store(want)
 			c.Expect(test.EQ, nil, err)
 
-			got, err = db.List(listOp{what: "users", query: "*"})
+			got, err = db.List(ListOp{What: "users", Query: "*"})
 			c.Expect(test.EQ, nil, err)
 			c.Expect(test.EQ, want, got)
 		}},
 
 	{"Deck List/Store",
-		func(t *testing.T, db datasource) {
+		func(t *testing.T, db DataSource) {
 			c := test.Checker(t)
 
-			want := deckList{
+			want := DeckList{
 				{Name: "test1:deck1", Desc: "The meaning of life."},
 				{Name: "test1:deck2", Desc: "Essential Camus quotes."},
 			}
 			err := db.Store(want)
 			c.Expect(test.EQ, nil, err)
 
-			got, err := db.List(listOp{what: "decks", query: "test1:deck1"})
+			got, err := db.List(ListOp{What: "decks", Query: "test1:deck1"})
 			c.Expect(test.EQ, nil, err)
 			c.Expect(test.EQ, want[:1], got)
 
@@ -55,16 +55,16 @@ var tests = []struct {
 			err = db.Store(want)
 			c.Expect(test.EQ, nil, err)
 
-			got, err = db.List(listOp{what: "decks", query: "*"})
+			got, err = db.List(ListOp{What: "decks", Query: "*"})
 			c.Expect(test.EQ, nil, err)
 			c.Expect(test.EQ, want, got)
 		}},
 
 	{"Card List/Store",
-		func(t *testing.T, db datasource) {
+		func(t *testing.T, db DataSource) {
 			c := test.Checker(t)
 
-			want := cardList{
+			want := CardList{
 				{Owner: "user1:deck1", Front: "big", Back: "small"},
 				{Owner: "user1:deck1", Front: "tall", Back: "short"},
 				{Owner: "user1:deck1", Front: "ugly", Back: "pretty"},
@@ -77,47 +77,47 @@ var tests = []struct {
 			err := db.Store(want)
 			c.Expect(test.EQ, nil, err)
 
-			got, err := db.List(listOp{what: "cards", query: "user1:*"})
+			got, err := db.List(ListOp{What: "cards", Query: "user1:*"})
 			c.Expect(test.EQ, nil, err)
-			checkIgnoreIDs(t, want[:5], got.(cardList))
+			checkIgnoreIDs(t, want[:5], got.(CardList))
 
 			card := Card{Owner: "user2:deck1", Front: "chicken", Back: "waffles"}
 			want = append(want, card)
-			err = db.Store(cardList{card})
+			err = db.Store(CardList{card})
 			c.Expect(test.EQ, nil, err)
 
-			got, err = db.List(listOp{what: "cards", query: "*"})
+			got, err = db.List(ListOp{What: "cards", Query: "*"})
 			c.Expect(test.EQ, nil, err)
-			checkIgnoreIDs(t, want, got.(cardList))
+			checkIgnoreIDs(t, want, got.(CardList))
 		}},
 
 	{"Init DB from disk",
-		func(t *testing.T, db datasource) {
+		func(t *testing.T, db DataSource) {
 			c := test.Checker(t)
 
 			err := db.Init("./testdata")
 			c.Expect(test.EQ, nil, err)
 
-			wantUsers := userList{
+			wantUsers := UserList{
 				{Email: "ai.ngau@gmail.com", Name: "Ai Ngau", Password: "$2a$10$KgFhp4HAaBCRAYbFp5XYUOKrbO90yrpUQte4eyafk4Tu6mnZcNWiK"},
 				{Email: "askcarter@google.com", Name: "Carter", Password: "$2a$10$KgFhp4HAaBCRAYbFp5XYUOKrbO90yrpUQte4eyafk4Tu6mnZcNWiK"},
 			}
 
-			got, err := db.List(listOp{what: "users", query: "*"})
+			got, err := db.List(ListOp{What: "users", Query: "*"})
 			c.Expect(test.EQ, nil, err)
-			c.Expect(test.EQ, wantUsers, got.(userList))
+			c.Expect(test.EQ, wantUsers, got.(UserList))
 
-			wantDecks := deckList{
+			wantDecks := DeckList{
 				{Name: "ai.ngau@gmail.com:spanish"},
 				{Name: "askcarter@google.com:algebra"},
 				{Name: "askcarter@google.com:programming"},
 			}
 
-			got, err = db.List(listOp{what: "decks", query: "*"})
+			got, err = db.List(ListOp{What: "decks", Query: "*"})
 			c.Expect(test.EQ, nil, err)
-			c.Expect(test.EQ, wantDecks, got.(deckList))
+			c.Expect(test.EQ, wantDecks, got.(DeckList))
 
-			wantCards := cardList{
+			wantCards := CardList{
 				{Owner: "ai.ngau@gmail.com:spanish", Front: "feugo", Back: "pretty"},
 				{Owner: "ai.ngau@gmail.com:spanish", Front: "futbol", Back: "soccer"},
 				{Owner: "ai.ngau@gmail.com:spanish", Front: "que?", Back: "what?"},
@@ -130,9 +130,9 @@ var tests = []struct {
 				{Owner: "askcarter@google.com:programming", Front: "public interface", Back: "API"},
 			}
 
-			got, err = db.List(listOp{what: "cards", query: "*"})
+			got, err = db.List(ListOp{What: "cards", Query: "*"})
 			c.Expect(test.EQ, nil, err)
-			checkIgnoreIDs(t, wantCards, got.(cardList))
+			checkIgnoreIDs(t, wantCards, got.(CardList))
 		}},
 }
 
@@ -146,7 +146,7 @@ func TestSqlDS(t *testing.T) {
 		}
 		defer os.Remove(f.Name())
 
-		var db datasource = &DB{}
+		var db DataSource = &DB{}
 		err = db.Open(f.Name())
 		c.Expect(test.EQ, nil, err)
 
@@ -156,7 +156,7 @@ func TestSqlDS(t *testing.T) {
 	}
 }
 
-func checkIgnoreIDs(t *testing.T, expected, actual cardList) {
+func checkIgnoreIDs(t *testing.T, expected, actual CardList) {
 	if len(expected) != len(actual) {
 		t.Fatalf("Length mismatch.  \nExpect: %v  \nActual: %v", expected, actual)
 	}

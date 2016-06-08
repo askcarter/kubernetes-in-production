@@ -15,7 +15,7 @@ type User struct {
 // be stored as 'carter@carter.com:math'.  'Name' must be unique.
 type Deck struct {
 	Name string `json:"name"`
-	Desc string `json:"desc"`
+	Desc string `json:"desc,omitempty"`
 }
 
 // A Deck can have many flashcards.  There is no checking that a card is unique.
@@ -26,46 +26,46 @@ type Card struct {
 	Back  string `json:"back"`
 }
 
-type cardList []Card
-type deckList []Deck
-type userList []User
+type CardList []Card
+type DeckList []Deck
+type UserList []User
 
-func (dl deckList) List(ds datasource, l listOp) error {
+func (dl DeckList) List(ds DataSource, l ListOp) error {
 	return nil
 }
-func (dl deckList) Store(ds datasource, r io.Reader, s string) error {
+func (dl DeckList) Store(ds DataSource, r io.Reader, s string) error {
 	return nil
 }
-func (ul userList) List(ds datasource, l listOp) error {
+func (ul UserList) List(ds DataSource, l ListOp) error {
 	return nil
 }
-func (ul userList) Store(ds datasource, r io.Reader, s string) error {
+func (ul UserList) Store(ds DataSource, r io.Reader, s string) error {
 	return nil
 }
-func (cl cardList) List(ds datasource, l listOp) error {
+func (cl CardList) List(ds DataSource, l ListOp) error {
 	return nil
 }
-func (cl cardList) Store(ds datasource, r io.Reader, s string) error {
+func (cl CardList) Store(ds DataSource, r io.Reader, s string) error {
 	return nil
-}
-
-type listOp struct {
-	what, user, query string
 }
 
-// listStorers now how to read from and write to a datasource.
-type listStorer interface {
-	List(datasource, listOp) error
-	Store(datasource, io.Reader, string) error
+type ListOp struct {
+	What, User, Query string
 }
 
-// A datasource is a db for our app to interact with.  I made it an
+// ListStorers now how to read from and write to a DataSource.
+type ListStorer interface {
+	List(DataSource, ListOp) error
+	Store(DataSource, io.Reader, string) error
+}
+
+// A DataSource is a db for our app to interact with.  I made it an
 // an interface so that I could mock out DB calls.
-type datasource interface {
+type DataSource interface {
 	Open(file string) error
 	Close() error
 	Init(dir string) error
 
-	List(listOp) (listStorer, error)
-	Store(ls listStorer) error
+	List(ListOp) (ListStorer, error)
+	Store(ls ListStorer) error
 }

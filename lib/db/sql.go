@@ -57,27 +57,27 @@ func (db *DB) createTables() error {
 	return nil
 }
 
-func readFromDisk(f string) (listStorer, error) {
+func readFromDisk(f string) (ListStorer, error) {
 	b, err := ioutil.ReadFile(f)
 	if err != nil {
 		return nil, err
 	}
-	var ls listStorer
+	var ls ListStorer
 	switch {
 	case strings.HasSuffix(f, "users.json"):
-		users := userList{}
+		users := UserList{}
 		if err := json.Unmarshal(b, &users); err != nil {
 			return nil, err
 		}
 		ls = users
 	case strings.HasSuffix(f, "decks.json"):
-		decks := deckList{}
+		decks := DeckList{}
 		if err := json.Unmarshal(b, &decks); err != nil {
 			return nil, err
 		}
 		ls = decks
 	case strings.HasSuffix(f, "cards.json"):
-		cards := cardList{}
+		cards := CardList{}
 		if err := json.Unmarshal(b, &cards); err != nil {
 			return nil, err
 		}
@@ -143,14 +143,14 @@ func (db *DB) Open(filename string) error {
 }
 
 // Store inserts the elements of ls into db.
-func (db *DB) Store(ls listStorer) error {
+func (db *DB) Store(ls ListStorer) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
 
 	switch ls := ls.(type) {
-	case deckList:
+	case DeckList:
 		cmd := `
         INSERT OR REPLACE INTO decks(
             Name, Desc, InsertedDatetime
@@ -160,7 +160,7 @@ func (db *DB) Store(ls listStorer) error {
 				return err
 			}
 		}
-	case userList:
+	case UserList:
 		cmd := `
         INSERT OR REPLACE INTO users(
             Email, Name, Password, InsertedDatetime
@@ -171,7 +171,7 @@ func (db *DB) Store(ls listStorer) error {
 				return err
 			}
 		}
-	case cardList:
+	case CardList:
 		cmd := `
         INSERT OR REPLACE INTO cards(
             ID, Front, Back, Owner, InsertedDatetime
@@ -191,26 +191,26 @@ func (db *DB) Store(ls listStorer) error {
 	return err
 }
 
-// List retrieves listStorers from the db as specified by a listOp.
-func (db *DB) List(l listOp) (listStorer, error) {
-	if strings.HasSuffix(l.query, "*") {
-		l.query = strings.TrimRight(l.query, "*")
-		l.query += "%"
+// List retrieves ListStorers from the db as specified by a ListOp.
+func (db *DB) List(l ListOp) (ListStorer, error) {
+	if strings.HasSuffix(l.Query, "*") {
+		l.Query = strings.TrimRight(l.Query, "*")
+		l.Query += "%"
 	}
 
-	switch l.what {
+	switch l.What {
 	case "users":
 		cmd := `SELECT Email, Name, Password FROM users
                 WHERE Email LIKE ?
                 ORDER BY Email ASC`
 
-		rows, err := db.Query(cmd, l.query)
+		rows, err := db.Query(cmd, l.Query)
 		if err != nil {
 			return nil, err
 		}
 		defer rows.Close()
 
-		var result userList
+		var result UserList
 		for rows.Next() {
 			user := User{}
 			err := rows.Scan(&user.Email, &user.Name, &user.Password)
@@ -225,13 +225,13 @@ func (db *DB) List(l listOp) (listStorer, error) {
 		        WHERE Name LIKE ?
 		        ORDER BY Name ASC`
 
-		rows, err := db.Query(cmd, l.query)
+		rows, err := db.Query(cmd, l.Query)
 		if err != nil {
 			return nil, err
 		}
 		defer rows.Close()
 
-		var result deckList
+		var result DeckList
 		for rows.Next() {
 			deck := Deck{}
 			err := rows.Scan(&deck.Name, &deck.Desc)
@@ -246,13 +246,13 @@ func (db *DB) List(l listOp) (listStorer, error) {
 		        WHERE Owner LIKE ?
 		        ORDER BY Owner ASC`
 
-		rows, err := db.Query(cmd, l.query)
+		rows, err := db.Query(cmd, l.Query)
 		if err != nil {
 			return nil, err
 		}
 		defer rows.Close()
 
-		var result cardList
+		var result CardList
 		for rows.Next() {
 			card := Card{}
 			err := rows.Scan(&card.ID, &card.Owner, &card.Front, &card.Back)
@@ -264,5 +264,5 @@ func (db *DB) List(l listOp) (listStorer, error) {
 		return result, nil
 	}
 
-	return nil, errors.New("db.List(): unknown type passed in: " + l.what)
+	return nil, errors.New("db.List(): unknown type passed in: " + l.What)
 }
