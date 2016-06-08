@@ -35,16 +35,21 @@ func (dl deckList) List(ds datasource, l listOp) error {
 func (dl deckList) Store(ds datasource, r io.Reader, s string) error {
 	return nil
 }
-func (dl userList) List(ds datasource, l listOp) error {
+func (ul userList) List(ds datasource, l listOp) error {
 	return nil
 }
-func (dl userList) Store(ds datasource, r io.Reader, s string) error {
+func (ul userList) Store(ds datasource, r io.Reader, s string) error {
+	return nil
+}
+func (cl cardList) List(ds datasource, l listOp) error {
+	return nil
+}
+func (cl cardList) Store(ds datasource, r io.Reader, s string) error {
 	return nil
 }
 
 type listOp struct {
 	what, user, query string
-	admin             bool
 }
 
 // listStorers now how to read from and write to a datasource.

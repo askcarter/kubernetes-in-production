@@ -32,6 +32,13 @@ func (db *DB) createTables() error {
             Password TEXT,
             InsertedDatetime DATETIME
         );`,
+		`CREATE TABLE IF NOT EXISTS cards(
+            ID INTEGER PRIMARY KEY,
+            Front TEXT,
+            Back  TEXT,
+            Owner TEXT,
+            InsertedDatetime DATETIME
+        );`,
 	}
 	for _, query := range queries {
 		if _, err := tx.Exec(query); err != nil {
@@ -148,6 +155,16 @@ func (db *DB) Store(ls listStorer) error {
 				return err
 			}
 		}
+	case cardList:
+		cmd := `
+        INSERT OR REPLACE INTO cards(
+            ID, Front, Back, Owner, InsertedDatetime
+        ) values(NULL, ?, ?, ?, CURRENT_TIMESTAMP)`
+		for _, c := range ls {
+			if _, err := tx.Exec(cmd, c.Front, c.Back, c.Owner); err != nil {
+				return err
+			}
+		}
 	default:
 		return fmt.Errorf("db.Store: bad typed (%T) passed in.", ls)
 	}
@@ -193,7 +210,6 @@ func (db *DB) List(l listOp) (listStorer, error) {
 		cmd += "WHERE Email LIKE \"" + l.query + "\"\n"
 		cmd += "ORDER BY Email ASC\n"
 
-		fmt.Println(cmd)
 		rows, err := db.Query(cmd)
 		if err != nil {
 			return nil, err
@@ -209,7 +225,27 @@ func (db *DB) List(l listOp) (listStorer, error) {
 			}
 			result = append(result, user)
 		}
+		return result, nil
+	case "cards":
+		cmd := "SELECT ID, Owner, Front, Back FROM cards\n"
+		cmd += "WHERE Owner LIKE\"" + l.query + "\"\n"
+		cmd += "ORDER BY Owner ASC\n"
 
+		rows, err := db.Query(cmd)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		var result cardList
+		for rows.Next() {
+			card := Card{}
+			err := rows.Scan(&card.ID, &card.Owner, &card.Front, &card.Back)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, card)
+		}
 		return result, nil
 	}
 
