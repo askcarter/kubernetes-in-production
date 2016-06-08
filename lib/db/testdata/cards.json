@@ -1,0 +1,52 @@
+[
+	{
+		"owner": "ai.ngau@gmail.com:spanish",
+		"front": "feugo",
+		"back": "pretty"
+	},
+	{
+		"owner": "ai.ngau@gmail.com:spanish",
+		"front": "futbol",
+		"back": "soccer"
+	},
+	{
+		"owner": "ai.ngau@gmail.com:spanish",
+		"front": "que?",
+		"back": "what?"
+	},
+	{
+		"owner": "ai.ngau@gmail.com:spanish",
+		"front": "a donde es?",
+		"back": "where is?"
+	},
+	{
+		"owner": "ai.ngau@gmail.com:spanish",
+		"front": "hola",
+		"back": "hello"
+	},
+	{
+		"owner": "askcarter@google.com:algebra",
+		"front": "x*0",
+		"back": "0"
+	},
+	{
+		"owner": "askcarter@google.com:algebra",
+		"front": "x+0",
+		"back": "x"
+	},
+	{
+		"owner": "askcarter@google.com:algebra",
+		"front": "x+x",
+		"back": "2x"
+	},
+	{
+		"owner": "askcarter@google.com:programming",
+		"front": "favorite programming language",
+		"back": "Go"
+	},
+	{
+		"owner": "askcarter@google.com:programming",
+		"front": "public interface",
+		"back": "API"
+	}
+]
