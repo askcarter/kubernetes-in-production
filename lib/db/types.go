@@ -12,9 +12,10 @@ type User struct {
 
 // Decks belong to a User.  The first part of their name specifies a owner.
 // So a the name of a deck called 'math' belonging to 'carter@carter.com' would
-// be stored as 'carter@carter.com:math'.  Name's must be unique.
+// be stored as 'carter@carter.com:math'.  'Name' must be unique.
 type Deck struct {
 	Name string `json:"name"`
+	Desc string `json:"desc"`
 }
 
 // A Deck can have many flashcards.  There is no checking that a card is unique.

@@ -24,6 +24,7 @@ func (db *DB) createTables() error {
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS decks(
             Name TEXT PRIMARY KEY,
+            Desc TEXT,
             InsertedDatetime DATETIME
         );`,
 		`CREATE TABLE IF NOT EXISTS users(
@@ -137,10 +138,10 @@ func (db *DB) Store(ls listStorer) error {
 	case deckList:
 		cmd := `
         INSERT OR REPLACE INTO decks(
-            Name, InsertedDatetime
-        ) values(?, CURRENT_TIMESTAMP)`
+            Name, Desc, InsertedDatetime
+        ) values(?, ?, CURRENT_TIMESTAMP)`
 		for _, d := range ls {
-			if _, err := tx.Exec(cmd, strings.ToLower(d.Name)); err != nil {
+			if _, err := tx.Exec(cmd, strings.ToLower(d.Name), d.Desc); err != nil {
 				return err
 			}
 		}
@@ -183,28 +184,6 @@ func (db *DB) List(l listOp) (listStorer, error) {
 
 	// fmt.Println("\n\n\nquery: ", l.query, "\n\n\n")
 	switch l.what {
-	case "decks":
-		cmd := "SELECT Name FROM decks\n"
-		cmd += "WHERE Name LIKE \"" + l.query + "\"\n"
-		cmd += "ORDER BY Name ASC\n"
-
-		rows, err := db.Query(cmd)
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-
-		var result deckList
-		for rows.Next() {
-			deck := Deck{}
-			err := rows.Scan(&deck.Name)
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, deck)
-
-		}
-		return result, nil
 	case "users":
 		cmd := "SELECT Email, Name, Password FROM users\n"
 		cmd += "WHERE Email LIKE \"" + l.query + "\"\n"
@@ -224,6 +203,27 @@ func (db *DB) List(l listOp) (listStorer, error) {
 				return nil, err
 			}
 			result = append(result, user)
+		}
+		return result, nil
+	case "decks":
+		cmd := "SELECT Name, Desc FROM decks\n"
+		cmd += "WHERE Name LIKE \"" + l.query + "\"\n"
+		cmd += "ORDER BY Name ASC\n"
+
+		rows, err := db.Query(cmd)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		var result deckList
+		for rows.Next() {
+			deck := Deck{}
+			err := rows.Scan(&deck.Name, &deck.Desc)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, deck)
 		}
 		return result, nil
 	case "cards":

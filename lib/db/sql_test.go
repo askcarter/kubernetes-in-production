@@ -47,7 +47,7 @@ func TestSqlDS(t *testing.T) {
 	})
 
 	t.Run("decks", func(t *testing.T) {
-		want := deckList{{Name: "test:deck1"}}
+		want := deckList{{Name: "test:deck1", Desc: "The meaning of life."}}
 		err = db.Store(want)
 		c.Expect(test.EQ, nil, err)
 
@@ -55,7 +55,7 @@ func TestSqlDS(t *testing.T) {
 		c.Expect(test.EQ, nil, err)
 		c.Expect(test.EQ, want, got)
 
-		want = append(want, Deck{Name: "test:deck2"})
+		want = append(want, Deck{Name: "test:deck2", Desc: "Kayne updates."})
 		err = db.Store(want)
 		c.Expect(test.EQ, nil, err)
 
