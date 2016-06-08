@@ -57,32 +57,6 @@ func (db *DB) createTables() error {
 	return nil
 }
 
-// Populate reads [decks|users|cards].json files from the files
-// in the given directory, and then stores them in db.
-func (db *DB) Populate(dir string) error {
-	// populate tables
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	files := []string{"decks.json", "users.json", "cards.json"}
-	for _, f := range files {
-		f = filepath.Join(dir, f)
-		ul, err := readFromDisk(f)
-		if err != nil {
-			return err
-		}
-		if err := db.Store(ul); err != nil {
-			return err
-		}
-	}
-
-	if err := tx.Commit(); err != nil {
-		return err
-	}
-	return nil
-}
-
 func readFromDisk(f string) (listStorer, error) {
 	b, err := ioutil.ReadFile(f)
 	if err != nil {
@@ -114,7 +88,8 @@ func readFromDisk(f string) (listStorer, error) {
 	return ls, nil
 }
 
-// Init searches for [decks|users|cards].json to populate table with.
+// Init reads [decks|users|cards].json files from the files the given
+// directory, and then stores them in db.
 func (db *DB) Init(dir string) error {
 	// populate tables
 	tx, err := db.Begin()

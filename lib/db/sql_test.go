@@ -91,11 +91,11 @@ var tests = []struct {
 			checkIgnoreIDs(t, want, got.(cardList))
 		}},
 
-	{"Populate DB from disk",
+	{"Init DB from disk",
 		func(t *testing.T, db datasource) {
 			c := test.Checker(t)
 
-			err := db.(*DB).Populate("./testdata")
+			err := db.Init("./testdata")
 			c.Expect(test.EQ, nil, err)
 
 			wantUsers := userList{
