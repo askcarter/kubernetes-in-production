@@ -90,6 +90,50 @@ var tests = []struct {
 			c.Expect(test.EQ, nil, err)
 			checkIgnoreIDs(t, want, got.(cardList))
 		}},
+
+	{"Populate DB from disk",
+		func(t *testing.T, db datasource) {
+			c := test.Checker(t)
+
+			err := db.(*DB).Populate("./testdata")
+			c.Expect(test.EQ, nil, err)
+
+			wantUsers := userList{
+				{Email: "ai.ngau@gmail.com", Name: "Ai Ngau", Password: "$2a$10$KgFhp4HAaBCRAYbFp5XYUOKrbO90yrpUQte4eyafk4Tu6mnZcNWiK"},
+				{Email: "askcarter@google.com", Name: "Carter", Password: "$2a$10$KgFhp4HAaBCRAYbFp5XYUOKrbO90yrpUQte4eyafk4Tu6mnZcNWiK"},
+			}
+
+			got, err := db.List(listOp{what: "users", query: "*"})
+			c.Expect(test.EQ, nil, err)
+			c.Expect(test.EQ, wantUsers, got.(userList))
+
+			wantDecks := deckList{
+				{Name: "ai.ngau@gmail.com:spanish"},
+				{Name: "askcarter@google.com:algebra"},
+				{Name: "askcarter@google.com:programming"},
+			}
+
+			got, err = db.List(listOp{what: "decks", query: "*"})
+			c.Expect(test.EQ, nil, err)
+			c.Expect(test.EQ, wantDecks, got.(deckList))
+
+			wantCards := cardList{
+				{Owner: "ai.ngau@gmail.com:spanish", Front: "feugo", Back: "pretty"},
+				{Owner: "ai.ngau@gmail.com:spanish", Front: "futbol", Back: "soccer"},
+				{Owner: "ai.ngau@gmail.com:spanish", Front: "que?", Back: "what?"},
+				{Owner: "ai.ngau@gmail.com:spanish", Front: "a donde es?", Back: "where is?"},
+				{Owner: "ai.ngau@gmail.com:spanish", Front: "hola", Back: "hello"},
+				{Owner: "askcarter@google.com:algebra", Front: "x*0", Back: "0"},
+				{Owner: "askcarter@google.com:algebra", Front: "x+0", Back: "x"},
+				{Owner: "askcarter@google.com:algebra", Front: "x+x", Back: "2x"},
+				{Owner: "askcarter@google.com:programming", Front: "favorite programming language", Back: "Go"},
+				{Owner: "askcarter@google.com:programming", Front: "public interface", Back: "API"},
+			}
+
+			got, err = db.List(listOp{what: "cards", query: "*"})
+			c.Expect(test.EQ, nil, err)
+			checkIgnoreIDs(t, wantCards, got.(cardList))
+		}},
 }
 
 func TestSqlDS(t *testing.T) {
@@ -106,7 +150,7 @@ func TestSqlDS(t *testing.T) {
 		err = db.Open(f.Name())
 		c.Expect(test.EQ, nil, err)
 
-		err = db.Init("./testdata")
+		err = db.Init("")
 		c.Expect(test.EQ, nil, err)
 
 		t.Run(tt.desc, func(t *testing.T) {

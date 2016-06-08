@@ -2,14 +2,18 @@ package db
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// DB is a thin wrapper around
+// DB is a thin wrapper around sql.DB that know hows to operate on
+// db types.
 type DB struct {
 	*sql.DB
 }
@@ -53,30 +57,62 @@ func (db *DB) createTables() error {
 	return nil
 }
 
-// func readFromDisk(f string) (listStorer, error) {
-// 	b, err := ioutil.ReadFile(f)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	var ls listStorer
-// 	switch {
-// 	case strings.HasSuffix(f, "decks.json"):
-// 		decks := deckList{}
-// 		if err := json.Unmarshal(b, &decks); err != nil {
-// 			return nil, err
-// 		}
-// 		ls = decks
-// 	case strings.HasSuffix(f, "users.json"):
-// 		users := userList{}
-// 		if err := json.Unmarshal(b, &users); err != nil {
-// 			return nil, err
-// 		}
-// 		ls = users
-// 	default:
-// 		return nil, errors.New("readFromDisk: bad type passed in: " + f)
-// 	}
-// 	return ls, nil
-// }
+// Populate reads [decks|users|cards].json files from the files
+// in the given directory, and then stores them in db.
+func (db *DB) Populate(dir string) error {
+	// populate tables
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	files := []string{"decks.json", "users.json", "cards.json"}
+	for _, f := range files {
+		f = filepath.Join(dir, f)
+		ul, err := readFromDisk(f)
+		if err != nil {
+			return err
+		}
+		if err := db.Store(ul); err != nil {
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func readFromDisk(f string) (listStorer, error) {
+	b, err := ioutil.ReadFile(f)
+	if err != nil {
+		return nil, err
+	}
+	var ls listStorer
+	switch {
+	case strings.HasSuffix(f, "users.json"):
+		users := userList{}
+		if err := json.Unmarshal(b, &users); err != nil {
+			return nil, err
+		}
+		ls = users
+	case strings.HasSuffix(f, "decks.json"):
+		decks := deckList{}
+		if err := json.Unmarshal(b, &decks); err != nil {
+			return nil, err
+		}
+		ls = decks
+	case strings.HasSuffix(f, "cards.json"):
+		cards := cardList{}
+		if err := json.Unmarshal(b, &cards); err != nil {
+			return nil, err
+		}
+		ls = cards
+	default:
+		return nil, errors.New("readFromDisk: bad type passed in: " + f)
+	}
+	return ls, nil
+}
 
 // Init searches for [decks|users|cards].json to populate table with.
 func (db *DB) Init(dir string) error {
@@ -84,27 +120,6 @@ func (db *DB) Init(dir string) error {
 	if err != nil {
 		return err
 	}
-
-	// // populate tables
-	// tx, err := db.Begin()
-	// if err != nil {
-	// 	return err
-	// }
-	// files := []string{"decks.json", "users.json"}
-	// for _, f := range files {
-	// 	f = filepath.Join(dir, f)
-	// 	ul, err := readFromDisk(f)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	if err := db.Store(ul); err != nil {
-	// 		return err
-	// 	}
-	// }
-
-	// if err := tx.Commit(); err != nil {
-	// 	return err
-	// }
 
 	return nil
 }
@@ -128,6 +143,7 @@ func (db *DB) Open(filename string) error {
 	return nil
 }
 
+// Store inserts the elements of ls into db.
 func (db *DB) Store(ls listStorer) error {
 	tx, err := db.Begin()
 	if err != nil {
@@ -176,6 +192,7 @@ func (db *DB) Store(ls listStorer) error {
 	return err
 }
 
+// List retrieves listStorers from the db as specified by a listOp.
 func (db *DB) List(l listOp) (listStorer, error) {
 	if strings.HasSuffix(l.query, "*") {
 		l.query = strings.TrimRight(l.query, "*")
