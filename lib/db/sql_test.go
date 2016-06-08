@@ -40,19 +40,22 @@ var tests = []struct {
 		func(t *testing.T, db datasource) {
 			c := test.Checker(t)
 
-			want := deckList{{Name: "test:deck1", Desc: "The meaning of life."}}
+			want := deckList{
+				{Name: "test1:deck1", Desc: "The meaning of life."},
+				{Name: "test1:deck2", Desc: "Essential Camus quotes."},
+			}
 			err := db.Store(want)
 			c.Expect(test.EQ, nil, err)
 
-			got, err := db.List(listOp{what: "decks", query: "test:deck1"})
+			got, err := db.List(listOp{what: "decks", query: "test1:deck1"})
 			c.Expect(test.EQ, nil, err)
-			c.Expect(test.EQ, want, got)
+			c.Expect(test.EQ, want[:1], got)
 
-			want = append(want, Deck{Name: "test:deck2", Desc: "Kayne updates."})
+			want = append(want, Deck{Name: "test2:deck2", Desc: "Kayne updates."})
 			err = db.Store(want)
 			c.Expect(test.EQ, nil, err)
 
-			got, err = db.List(listOp{what: "decks", query: "test:*"})
+			got, err = db.List(listOp{what: "decks", query: "*"})
 			c.Expect(test.EQ, nil, err)
 			c.Expect(test.EQ, want, got)
 		}},
@@ -83,9 +86,9 @@ var tests = []struct {
 			err = db.Store(cardList{card})
 			c.Expect(test.EQ, nil, err)
 
-			got, err = db.List(listOp{what: "cards", query: "user2:*"})
+			got, err = db.List(listOp{what: "cards", query: "*"})
 			c.Expect(test.EQ, nil, err)
-			checkIgnoreIDs(t, want[5:], got.(cardList))
+			checkIgnoreIDs(t, want, got.(cardList))
 		}},
 }
 
