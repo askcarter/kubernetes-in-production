@@ -1,35 +1,3 @@
-/*
-dbd is a simple database server.  It registers an endpoint that
-can be used to retrieve data to/from it's database.
-
-For example
-    $ go build && ./dbd --http :55555 &
-    $ curl "http://127.0.0.1:55555/list?type=cards&user=user1@test.com&q=*"
-    [
-        {
-            "id": 8,
-            "owner": "user2@test.com:algebra",
-            "front": "x+x",
-            "back": "2x"
-        },
-        {
-            "id": 9,
-            "owner": "user2@test.com:programming",
-            "front": "favorite programming language",
-            "back": "Go"
-        },
-        {
-            "id": 10,
-            "owner": "user2@test.com:programming",
-            "front": "public interface",
-            "back": "API"
-        }
-    ]
-
-The database operates on Card, Deck, and User types.  Users own Decks which are
-made up of Cards.
-
-*/
 package main
 
 import (
