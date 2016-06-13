@@ -1,0 +1,28 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: persistent-db
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: my-db
+    spec:
+      containers:
+      - image: askcarter/example-db:1.0.0
+        name: my-db
+        ports:
+          - containerPort: 80
+            name: http
+        volumeMounts:
+          - name: mydb-persistent-storage
+            mountPath: /var/mydb
+        args: ["dbd", "-f", "/var/mydb/data"]
+      nodeSelector:
+        mydb: sql
+      volumes:
+      - name: mydb-persistent-storage
+        persistentVolumeClaim:
+          claimName: mydb
+
