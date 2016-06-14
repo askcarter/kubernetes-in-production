@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - image: askcarter/example-app:1.0.0
+        name: my-app
+        ports:
+          - containerPort: 80
+            name: http
