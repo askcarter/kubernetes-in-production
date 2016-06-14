@@ -58,7 +58,7 @@ make it read/writeable
 sudo chmod u+rw /mnt/mydb-disk
 ```
 
-make it so that the drive automounts on restart
+make it so that the drive automounts on restart.  More info [here](https://community.linuxmint.com/tutorial/view/1513).
 ```
 echo '/dev/sdb /mnt/mydb-disk ext4 discard,defaults 1 1' | sudo tee -a /etc/fstab
 ```
