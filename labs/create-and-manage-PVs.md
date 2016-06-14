@@ -48,8 +48,9 @@ sudo rm -rf /mnt/mydb-disk
 mount the drive
 ```
 sudo -p mkdir /mnt/mydb-disk
-`````
-`
+```
+
+```
 sudo mount -o discard,defaults /dev/sdb /mnt/mydb-disk
 ```
 
@@ -66,11 +67,12 @@ echo '/dev/sdb /mnt/mydb-disk ext4 discard,defaults 1 1' | sudo tee -a /etc/fsta
 add data to disk (pull from github, store it in correct location)
 ```
 git clone https://github.com/askcarter/spacerep
-`````
-`
+```
+```
 cd spacerep/cmd/dbd/
-`````
-`
+```
+
+```
 sudo cp test /mnt/mydb-disk/data
 ```
 
