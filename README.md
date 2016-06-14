@@ -11,10 +11,10 @@ In this workshop you will learn how to use Kubernetes in production, by:
 ## Kubernetes in Production Labs
 
 * [Creating and managing Node Pools](labs/creating-and-managing-node-pools.md)
-* [Create and manage Persistent Volumes](create-and-manage-PVs.md)
-* [Create and manage Horizontal Pod Autoscaling](create-and-manage-hpa.md)
-* [Create and manage Namespaces](create-and-manage-namespaces.md))
-* [Explore cluster level Logging/Monitoring (Stackdriver)](cluster-level-logmon-with-stackdriver.md)
+* [Create and manage Persistent Volumes](labs/create-and-manage-PVs.md)
+* [Create and manage Horizontal Pod Autoscaling](labs/create-and-manage-hpa.md)
+* [Create and manage Namespaces](labs/create-and-manage-namespaces.md))
+* [Explore cluster level Logging/Monitoring (Stackdriver)](labs/cluster-level-logmon-with-stackdriver.md)
 * [Set up a CI/CD pipeline with Jenkins](labs/cicd-with-jenkins.md)
 * [Visualize clusters (Weave?)](labs/visualize-clusters-with-weave.md)
 
