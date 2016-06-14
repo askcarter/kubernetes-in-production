@@ -5,7 +5,7 @@ This workshop builds upon the Kubernetes 101 material taught in [Scalable Micros
 In this workshop you will learn how to use Kubernetes in production, by:
 * Working with stateful applications
 * Monitoring and automating you cluster
-* Working with homogenous machines types in one cluster
+* Working with heterogenous machines types in one cluster
 * Setting up a Continuous Integration and Delivery pipeline for your cluster
 
 ## Kubernetes in Production Labs
